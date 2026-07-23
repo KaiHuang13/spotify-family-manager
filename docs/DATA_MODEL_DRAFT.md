@@ -223,8 +223,9 @@ Family 成員主檔。
 - 應收未付餘額：`charge.amount_minor - 已付金額`。
 - 付款未分配金額：`payment.amount_minor - 有效分配加總`。
 - 付款狀態：
-  - `paid`：未付餘額為零。
-  - `partial`：已付大於零且未付餘額大於零。
+  - `paid`：已付總額等於應付金額。
+  - `partially_paid`：已付總額大於零且小於應付金額。
+  - `overpaid`：已付總額大於應付金額。
   - `overdue`：未付餘額大於零且已超過到期日。
   - `unpaid`：未付且尚未逾期。
   - `void`：應收已作廢。

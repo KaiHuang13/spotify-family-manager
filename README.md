@@ -25,3 +25,20 @@
 ## 目前狀態
 
 第一階段的初版需求文件已建立。開始實作前，應先確認 `docs/business-rules.md` 中的待確認事項，再據此完成資料庫設計與畫面規格。
+
+## 部署環境變數
+
+GitHub Pages 部署使用 `github-pages` Environment 或 Repository Variables：
+
+- `VITE_SUPABASE_URL`：Supabase Project URL。
+- `VITE_SUPABASE_ANON_KEY`：Supabase publishable 或 anon key。
+
+這兩個值會在 GitHub Actions 的建置階段注入。不得使用
+`service_role` 或 `sb_secret_` 金鑰；缺少任一變數時，部署會在建置前停止。
+
+## 測試資料
+
+正式 Migration 不依賴任何預先存在的 Auth 帳號。選用的
+`supabase/seed.sql` 只會替第一位既有 Auth 使用者建立測試 profile 與
+Spotify 方案；若尚無 Auth 使用者，seed 會安全略過。請先透過 Supabase
+Auth 建立測試使用者，再視需要重新執行 seed。

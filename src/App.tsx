@@ -1,11 +1,25 @@
+import { useAuth } from './hooks/useAuth'
+import { HomePage } from './pages/HomePage'
+import { LoginPage } from './pages/LoginPage'
+
 function App() {
-  return (
-    <main className="home">
-      <h1>Spotify Family Manager</h1>
-      <p>訂閱與費用分攤管理系統</p>
-    </main>
-  )
+  const { session, isLoading } = useAuth()
+
+  if (isLoading) {
+    return (
+      <main className="home">
+        <p role="status" aria-live="polite">
+          正在確認登入狀態…
+        </p>
+      </main>
+    )
+  }
+
+  if (!session) {
+    return <LoginPage />
+  }
+
+  return <HomePage key={session.user.id} ownerId={session.user.id} />
 }
 
 export default App
-

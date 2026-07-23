@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "typecheck": "tsc -b --noEmit",
-    "test": "node --test"
+    "test": "node --experimental-strip-types --test tests/auth-actions.test.ts tests/billing-period-detail-model.test.ts tests/billing-period-model.test.ts tests/dashboard-model.test.ts tests/member-form-model.test.ts tests/member-list-model.test.ts tests/payment-model.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.8",
@@ -24,6 +24,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
     "globals": "^17.7.0",
+    "supabase": "2.109.1",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.65.0",
     "vite": "^8.1.5"

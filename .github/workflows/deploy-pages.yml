@@ -21,6 +21,9 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
 
     steps:
       - name: Checkout repository
@@ -34,6 +37,54 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Validate public Supabase build variables
+        shell: bash
+        run: |
+          missing=()
+
+          if [[ -z "$VITE_SUPABASE_URL" ]]; then
+            missing+=("VITE_SUPABASE_URL")
+          fi
+
+          if [[ -z "$VITE_SUPABASE_ANON_KEY" ]]; then
+            missing+=("VITE_SUPABASE_ANON_KEY")
+          fi
+
+          if (( ${#missing[@]} > 0 )); then
+            echo "::error::Missing GitHub Environment or Repository Variables: ${missing[*]}"
+            exit 1
+          fi
+
+          node --input-type=module <<'NODE'
+          const key = process.env.VITE_SUPABASE_ANON_KEY
+
+          if (key.startsWith('sb_secret_')) {
+            console.error(
+              '::error::VITE_SUPABASE_ANON_KEY must not use a Supabase secret key.',
+            )
+            process.exit(1)
+          }
+
+          const jwtParts = key.split('.')
+
+          if (jwtParts.length === 3) {
+            try {
+              const payload = JSON.parse(
+                Buffer.from(jwtParts[1], 'base64url').toString('utf8'),
+              )
+
+              if (payload.role === 'service_role') {
+                console.error(
+                  '::error::VITE_SUPABASE_ANON_KEY must not use a service_role key.',
+                )
+                process.exit(1)
+              }
+            } catch {
+              // A malformed key will be rejected by Supabase at runtime.
+            }
+          }
+          NODE
 
       - name: Build application
         run: npm run build
