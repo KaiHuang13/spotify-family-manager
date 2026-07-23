@@ -14,6 +14,7 @@ const options = [
     periodStart: '2026-07-01',
     periodEnd: '2026-08-01',
     amountMinor: 50n,
+    unpaidMinor: 50n,
     currency: 'TWD',
   },
 ]
@@ -24,6 +25,7 @@ test('將管理者可讀取的成員應收轉為付款選項', () => {
       id: 'charge-1',
       amount_minor: '50',
       currency: 'TWD',
+      payments: [],
       subscription_members: [
         {
           member_id: 'member-1',
@@ -44,10 +46,56 @@ test('將管理者可讀取的成員應收轉為付款選項', () => {
   assert.deepEqual(result, options)
 })
 
+test('已付足的成員不列入付款選項，部分付款顯示剩餘金額', () => {
+  const baseRow = {
+    id: 'charge-1',
+    amount_minor: '50',
+    currency: 'TWD',
+    subscription_members: [
+      {
+        member_id: 'member-1',
+        members: [{ display_name: '成員甲' }],
+      },
+    ],
+    billing_periods: [
+      {
+        id: 'period-1',
+        period_start: '2026-07-01',
+        period_end: '2026-08-01',
+        status: 'draft',
+      },
+    ],
+  }
+
+  assert.deepEqual(
+    toPaymentChargeOptions([
+      {
+        ...baseRow,
+        payments: [{ amount_minor: '50', status: 'posted' }],
+      },
+    ]),
+    [],
+  )
+
+  assert.equal(
+    toPaymentChargeOptions([
+      {
+        ...baseRow,
+        payments: [
+          { amount_minor: '20', status: 'posted' },
+          { amount_minor: '10', status: 'void' },
+        ],
+      },
+    ])[0]?.unpaidMinor,
+    30n,
+  )
+})
+
 test('有效付款資料可通過驗證', () => {
   assert.deepEqual(
     validateRecordPaymentInput(
       {
+        billingPeriodId: 'period-1',
         memberId: 'member-1',
         memberChargeId: 'charge-1',
         amount: '20',
@@ -66,6 +114,7 @@ test('拒絕零、負數、小數及超出安全範圍的付款金額', () => {
     assert.equal(
       validateRecordPaymentInput(
         {
+          billingPeriodId: 'period-1',
           memberId: 'member-1',
           memberChargeId: 'charge-1',
           amount,
@@ -82,6 +131,7 @@ test('拒絕零、負數、小數及超出安全範圍的付款金額', () => {
   assert.equal(
     validateRecordPaymentInput(
       {
+        billingPeriodId: 'period-1',
         memberId: 'member-1',
         memberChargeId: 'charge-1',
         amount: '9007199254740992',
@@ -98,6 +148,7 @@ test('拒絕零、負數、小數及超出安全範圍的付款金額', () => {
 test('拒絕成員與應收不相符及缺少付款資料', () => {
   const errors = validateRecordPaymentInput(
     {
+      billingPeriodId: 'period-1',
       memberId: 'other-member',
       memberChargeId: 'charge-1',
       amount: '20',
@@ -108,7 +159,7 @@ test('拒絕成員與應收不相符及缺少付款資料', () => {
     options,
   )
 
-  assert.equal(errors.memberChargeId, '請選擇該成員的對應月份。')
+  assert.equal(errors.memberChargeId, '請選擇該月份可付款的成員。')
   assert.equal(errors.paidOn, '請輸入有效的付款日期。')
-  assert.equal(errors.paymentMethod, '請輸入付款方式。')
+  assert.equal(errors.paymentMethod, '請選擇付款方式。')
 })

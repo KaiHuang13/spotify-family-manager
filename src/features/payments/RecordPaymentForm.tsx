@@ -13,6 +13,7 @@ interface RecordPaymentFormProps {
 }
 
 const initialInput: RecordPaymentInput = {
+  billingPeriodId: '',
   memberId: '',
   memberChargeId: '',
   amount: '50',
@@ -53,20 +54,65 @@ export function RecordPaymentForm({
     }
   }, [ownerId, optionsVersion])
 
-  const members = useMemo(
+  const billingPeriods = useMemo(
     () =>
       Array.from(
         new Map(
           options.map((option) => [
-            option.memberId,
-            { id: option.memberId, name: option.memberName },
+            option.billingPeriodId,
+            {
+              id: option.billingPeriodId,
+              periodStart: option.periodStart,
+              periodEnd: option.periodEnd,
+            },
           ]),
         ).values(),
-      ).sort((left, right) => left.name.localeCompare(right.name, 'zh-TW')),
+      ).sort((left, right) => right.periodStart.localeCompare(left.periodStart)),
     [options],
   )
-  const memberChargeOptions = options.filter(
-    (option) => option.memberId === input.memberId,
+  const memberOptions = options
+    .filter((option) => option.billingPeriodId === input.billingPeriodId)
+    .sort((left, right) =>
+      left.memberName.localeCompare(right.memberName, 'zh-TW'),
+    )
+
+  function selectBillingPeriod(billingPeriodId: string) {
+    setInput((current) => ({
+      ...current,
+      billingPeriodId,
+      memberId: '',
+      memberChargeId: '',
+    }))
+    setFieldErrors((current) => ({
+      ...current,
+      billingPeriodId: undefined,
+      memberId: undefined,
+      memberChargeId: undefined,
+    }))
+    setSubmitError(null)
+    setSuccessMessage(null)
+  }
+
+  function selectMember(memberId: string) {
+    const selectedOption = memberOptions.find(
+      (option) => option.memberId === memberId,
+    )
+    setInput((current) => ({
+      ...current,
+      memberId,
+      memberChargeId: selectedOption?.chargeId ?? '',
+    }))
+    setFieldErrors((current) => ({
+      ...current,
+      memberId: undefined,
+      memberChargeId: undefined,
+    }))
+    setSubmitError(null)
+    setSuccessMessage(null)
+  }
+
+  const selectedCharge = options.find(
+    (option) => option.chargeId === input.memberChargeId,
   )
 
   function updateInput(field: keyof RecordPaymentInput, value: string) {
@@ -141,72 +187,60 @@ export function RecordPaymentForm({
         <>
           <div className="member-form-grid payment-form-grid">
             <div className="form-field">
-              <label htmlFor="payment-member">成員</label>
+              <label htmlFor="payment-billing-period">對應月份</label>
               <select
-                id="payment-member"
-                value={input.memberId}
-                onChange={(event) => {
-                  setInput((current) => ({
-                    ...current,
-                    memberId: event.target.value,
-                    memberChargeId: '',
-                  }))
-                  setFieldErrors((current) => ({
-                    ...current,
-                    memberId: undefined,
-                    memberChargeId: undefined,
-                  }))
-                  setSubmitError(null)
-                  setSuccessMessage(null)
-                }}
-                aria-invalid={Boolean(fieldErrors.memberId)}
+                id="payment-billing-period"
+                value={input.billingPeriodId}
+                onChange={(event) => selectBillingPeriod(event.target.value)}
+                aria-invalid={Boolean(fieldErrors.billingPeriodId)}
                 aria-describedby={
-                  fieldErrors.memberId ? 'payment-member-error' : undefined
+                  fieldErrors.billingPeriodId
+                    ? 'payment-billing-period-error'
+                    : undefined
                 }
                 disabled={isSubmitting}
                 required
               >
                 <option value="">請選擇</option>
-                {members.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.name}
+                {billingPeriods.map((period) => (
+                  <option key={period.id} value={period.id}>
+                    {period.periodStart} ～ {period.periodEnd}
                   </option>
                 ))}
               </select>
-              {fieldErrors.memberId ? (
-                <span id="payment-member-error" className="field-error">
-                  {fieldErrors.memberId}
+              {fieldErrors.billingPeriodId ? (
+                <span id="payment-billing-period-error" className="field-error">
+                  {fieldErrors.billingPeriodId}
                 </span>
               ) : null}
             </div>
 
             <div className="form-field">
-              <label htmlFor="payment-member-charge">對應月份</label>
+              <label htmlFor="payment-member">成員</label>
               <select
-                id="payment-member-charge"
-                value={input.memberChargeId}
-                onChange={(event) =>
-                  updateInput('memberChargeId', event.target.value)
-                }
-                aria-invalid={Boolean(fieldErrors.memberChargeId)}
+                id="payment-member"
+                value={input.memberId}
+                onChange={(event) => selectMember(event.target.value)}
+                aria-invalid={Boolean(fieldErrors.memberId)}
                 aria-describedby={
-                  fieldErrors.memberChargeId
-                    ? 'payment-member-charge-error'
-                    : undefined
+                  fieldErrors.memberId ? 'payment-member-error' : undefined
                 }
-                disabled={isSubmitting || !input.memberId}
+                disabled={isSubmitting || !input.billingPeriodId}
                 required
               >
-                <option value="">請選擇</option>
-                {memberChargeOptions.map((option) => (
-                  <option key={option.chargeId} value={option.chargeId}>
-                    {option.periodStart} ～ {option.periodEnd}
+                <option value="">
+                  {input.billingPeriodId ? '請選擇' : '請先選擇月份'}
+                </option>
+                {memberOptions.map((option) => (
+                  <option key={option.chargeId} value={option.memberId}>
+                    {option.memberName}（未付 {option.currency}{' '}
+                    {option.unpaidMinor.toLocaleString('zh-TW')}）
                   </option>
                 ))}
               </select>
-              {fieldErrors.memberChargeId ? (
-                <span id="payment-member-charge-error" className="field-error">
-                  {fieldErrors.memberChargeId}
+              {fieldErrors.memberId || fieldErrors.memberChargeId ? (
+                <span id="payment-member-error" className="field-error">
+                  {fieldErrors.memberId ?? fieldErrors.memberChargeId}
                 </span>
               ) : null}
             </div>
@@ -230,6 +264,12 @@ export function RecordPaymentForm({
                 disabled={isSubmitting}
                 required
               />
+              {selectedCharge ? (
+                <span className="field-help">
+                  本期尚未付款：{selectedCharge.currency}{' '}
+                  {selectedCharge.unpaidMinor.toLocaleString('zh-TW')}
+                </span>
+              ) : null}
               {fieldErrors.amount ? (
                 <span id="payment-amount-error" className="field-error">
                   {fieldErrors.amount}
@@ -260,7 +300,7 @@ export function RecordPaymentForm({
 
             <div className="form-field">
               <label htmlFor="payment-method">付款方式</label>
-              <input
+              <select
                 id="payment-method"
                 value={input.paymentMethod}
                 onChange={(event) =>
@@ -272,7 +312,12 @@ export function RecordPaymentForm({
                 }
                 disabled={isSubmitting}
                 required
-              />
+              >
+                <option value="">請選擇</option>
+                <option value="現金">現金</option>
+                <option value="LinePay">LinePay</option>
+                <option value="銀行轉帳">銀行轉帳</option>
+              </select>
               {fieldErrors.paymentMethod ? (
                 <span id="payment-method-error" className="field-error">
                   {fieldErrors.paymentMethod}

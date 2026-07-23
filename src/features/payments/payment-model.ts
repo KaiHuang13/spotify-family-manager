@@ -40,6 +40,15 @@ export function toPaymentChargeOptions(
       return []
     }
 
+    const amountMinor = BigInt(row.amount_minor)
+    const paidMinor = row.payments
+      .filter((payment) => payment.status === 'posted')
+      .reduce((total, payment) => total + BigInt(payment.amount_minor), 0n)
+
+    if (paidMinor >= amountMinor) {
+      return []
+    }
+
     return [
       {
         chargeId: row.id,
@@ -48,7 +57,8 @@ export function toPaymentChargeOptions(
         billingPeriodId: billingPeriod.id,
         periodStart: billingPeriod.period_start,
         periodEnd: billingPeriod.period_end,
-        amountMinor: BigInt(row.amount_minor),
+        amountMinor,
+        unpaidMinor: amountMinor - paidMinor,
         currency: row.currency,
       },
     ]
@@ -64,12 +74,20 @@ export function validateRecordPaymentInput(
     (option) => option.chargeId === input.memberChargeId,
   )
 
+  if (!input.billingPeriodId) {
+    errors.billingPeriodId = '請選擇對應月份。'
+  }
+
   if (!input.memberId) {
     errors.memberId = '請選擇成員。'
   }
 
-  if (!selectedCharge || selectedCharge.memberId !== input.memberId) {
-    errors.memberChargeId = '請選擇該成員的對應月份。'
+  if (
+    !selectedCharge ||
+    selectedCharge.memberId !== input.memberId ||
+    selectedCharge.billingPeriodId !== input.billingPeriodId
+  ) {
+    errors.memberChargeId = '請選擇該月份可付款的成員。'
   }
 
   if (!/^[1-9]\d*$/.test(input.amount)) {
@@ -82,8 +100,8 @@ export function validateRecordPaymentInput(
     errors.paidOn = '請輸入有效的付款日期。'
   }
 
-  if (input.paymentMethod.trim() === '') {
-    errors.paymentMethod = '請輸入付款方式。'
+  if (!['現金', 'LinePay', '銀行轉帳'].includes(input.paymentMethod)) {
+    errors.paymentMethod = '請選擇付款方式。'
   }
 
   return errors

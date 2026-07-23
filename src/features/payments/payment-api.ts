@@ -25,6 +25,10 @@ export async function fetchPaymentChargeOptions(
           id,
           amount_minor,
           currency,
+          payments (
+            amount_minor,
+            status
+          ),
           subscription_members (
             member_id,
             members (

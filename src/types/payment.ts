@@ -4,6 +4,10 @@ export interface PaymentChargeQueryRow {
   id: string
   amount_minor: DatabaseMoneyValue
   currency: string
+  payments: {
+    amount_minor: DatabaseMoneyValue
+    status: string
+  }[]
   subscription_members: QueryRelation<{
     member_id: string
     members: QueryRelation<{ display_name: string }>
@@ -24,10 +28,12 @@ export interface PaymentChargeOption {
   periodStart: string
   periodEnd: string
   amountMinor: bigint
+  unpaidMinor: bigint
   currency: string
 }
 
 export interface RecordPaymentInput {
+  billingPeriodId: string
   memberId: string
   memberChargeId: string
   amount: string
