@@ -53,7 +53,7 @@ export function BillingPeriodList({
 
   return (
     <div className="member-table-wrapper">
-      <table className="member-table">
+      <table className="member-table billing-period-list-table">
         <thead>
           <tr>
             <th scope="col">費用月份</th>
@@ -70,17 +70,25 @@ export function BillingPeriodList({
             const totals = sumCharges(period)
             return (
               <tr key={period.id}>
-                <td>{getMonthLabel(period.periodStart)}</td>
-                <td>{formatMinorAmount(period.providerCostMinor, period.currency)}</td>
-                <td>{formatMinorAmount(totals.receivable, period.currency)}</td>
-                <td>{formatMinorAmount(totals.collected, period.currency)}</td>
-                <td>{formatMinorAmount(totals.outstanding, period.currency)}</td>
-                <td>
+                <td data-label="費用月份">{getMonthLabel(period.periodStart)}</td>
+                <td data-label="Spotify 成本">
+                  {formatMinorAmount(period.providerCostMinor, period.currency)}
+                </td>
+                <td data-label="應收">
+                  {formatMinorAmount(totals.receivable, period.currency)}
+                </td>
+                <td data-label="已收">
+                  {formatMinorAmount(totals.collected, period.currency)}
+                </td>
+                <td data-label="未收">
+                  {formatMinorAmount(totals.outstanding, period.currency)}
+                </td>
+                <td data-label="狀態">
                   <span className={`payment-status payment-status-${totals.outstanding === 0n ? 'paid' : 'unpaid'}`}>
                     {totals.outstanding === 0n ? '已結清' : '收款中'}
                   </span>
                 </td>
-                <td>
+                <td data-label="操作">
                   <button className="button-secondary table-action" type="button" onClick={() => onViewDetail(period.id)}>
                     查看明細
                   </button>

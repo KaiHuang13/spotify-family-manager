@@ -15,6 +15,7 @@ function formatPaymentDateTime(value: string) {
     timeZone: 'Asia/Taipei',
     dateStyle: 'medium',
     timeStyle: 'short',
+    hour12: false,
   }).format(new Date(value))
 }
 

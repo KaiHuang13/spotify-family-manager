@@ -13,7 +13,7 @@ const initialInput: CreateBillingPeriodInput = {
   periodStart: '',
   periodEnd: '',
   dueDate: '',
-  providerCostAmount: '',
+  providerCostAmount: '298',
 }
 
 interface CreateBillingPeriodFormProps {

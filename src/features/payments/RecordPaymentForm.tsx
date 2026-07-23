@@ -15,7 +15,7 @@ interface RecordPaymentFormProps {
 const initialInput: RecordPaymentInput = {
   memberId: '',
   memberChargeId: '',
-  amount: '',
+  amount: '50',
   paidOn: '',
   paymentMethod: '',
   notes: '',

@@ -136,6 +136,18 @@ button:disabled {
   background: #0f172a;
 }
 
+input[type="date"] {
+  color-scheme: dark;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  border-radius: 0.25rem;
+  padding: 0.2rem;
+  background-color: #e2e8f0;
+  cursor: pointer;
+  opacity: 1;
+}
+
 .auth-form input:focus-visible,
 .member-form input:focus-visible,
 .member-form select:focus-visible,
@@ -701,6 +713,54 @@ button:focus-visible {
   .member-table th,
   .member-table td {
     padding: 0.875rem 1rem;
+  }
+
+  .billing-period-list-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .billing-period-list-table,
+  .billing-period-list-table tbody,
+  .billing-period-list-table tr,
+  .billing-period-list-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .billing-period-list-table tr {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #263449;
+  }
+
+  .billing-period-list-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .billing-period-list-table td {
+    display: grid;
+    grid-template-columns: minmax(7rem, 0.8fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 0;
+  }
+
+  .billing-period-list-table td::before {
+    color: #94a3b8;
+    content: attr(data-label);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .billing-period-list-table .table-action {
+    width: 100%;
   }
 
   .member-form-grid {
